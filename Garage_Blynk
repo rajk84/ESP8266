@@ -1,0 +1,49 @@
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+// You should get Auth Token in the Blynk App.
+// Go to the Project Settings (nut icon).
+char auth[] = "YourBlynkAuthCode";
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+char ssid[] = "YourSSID";
+char pass[] = "Yourpassword";
+
+//Relay Pin to be used
+int Relay_Pin=16;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  SetupWifi();
+  InitializePin();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  Blynk.run();
+}
+
+void SetupWifi(){
+  //setup and connect to wifi
+  Blynk.begin(auth, ssid, pass); 
+  Serial.println("in setup wifi"); 
+}
+
+void InitializePin() {
+  //Define and Set Relay pin to High as Optocoupler Relay works reverse
+  pinMode(Relay_Pin, OUTPUT);
+  digitalWrite(Relay_Pin, HIGH);
+  Serial.println("in Relay pin setup");
+}
+
+//this code runs when V1 is pressed in Blynk App
+BLYNK_WRITE(V1) {
+  int pindata = param.asInt(); //get value of ON or OFF change
+  if (pindata==1) {  //Run Click button only when change is from OFF to ON
+    digitalWrite(Relay_Pin, LOW);
+    delay(200);
+    digitalWrite(Relay_Pin, HIGH);  
+  }  
+}
