@@ -1,0 +1,126 @@
+/*
+ * Ultrasonic Simple
+ * Prints the distance read by an ultrasonic sensor in
+ * centimeters. They are supported to four pins ultrasound
+ * sensors (liek HC-SC04) and three pins (like PING)))
+ * and Seeed Studio sesores).
+ *
+ * The circuit:
+ * * Module HR-SC04 (four pins) or PING))) (and other with
+ *   three pins), attached to digital pins as follows:
+ * ---------------------    ---------------------
+ * | HC-SC04 | Arduino |    | 3 pins  | Arduino |
+ * ---------------------    ---------------------
+ * |   Vcc   |   5V    |    |   Vcc   |   5V    |
+ * |   Trig  |   12    | OR |   SIG   |   13    |
+ * |   Echo  |   13    |    |   Gnd   |   GND   |
+ * |   Gnd   |   GND   |    ---------------------
+ * ---------------------
+ * Note: You need not obligatorily use the pins defined above
+ * 
+ * By default, the distance returned by the distanceRead()
+ * method is in centimeters, to get the distance in inches,
+ * pass INC as a parameter.
+ * Example: ultrasonic.distanceRead(INC)
+ *
+ * created 3 Apr 2014
+ * by Erick Simões (github: @ErickSimoes | twitter: @AloErickSimoes)
+ * modified 23 Jan 2017
+ * by Erick Simões (github: @ErickSimoes | twitter: @AloErickSimoes)
+ * modified 03 Mar 2017
+ * by Erick Simões (github: @ErickSimoes | twitter: @AloErickSimoes)
+ *
+ * This example code is released into the MIT License.
+ */
+
+#include <Ultrasonic.h>
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+/*
+ * Pass as a parameter the trigger and echo pin, respectively,
+ * or only the signal pin (for sensors 3 pins), like:
+ * Ultrasonic ultrasonic(13);
+ */
+Ultrasonic ultrasonic(4, 5);
+
+// You should get Auth Token in the Blynk App.
+// Go to the Project Settings (nut icon).
+char auth[] = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+char ssid[] = "XXXX";
+char pass[] = "YYYY";
+
+//Variable Declarations
+char DoorStatus = 'C';
+int Light = 1;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  SetupWifi();
+  InitializePin();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  Serial.println("In Loop");
+  Blynk.run();
+  DoorStat();
+  SenseMotion();
+  SenseDistance();
+}
+
+void SetupWifi(){
+  //setup and connect to wifi
+  Blynk.begin(auth, ssid, pass); 
+  Serial.println("in setup wifi"); 
+}
+
+void InitializePin() {
+  //Define and Set Relay pin to High as Optocoupler Relay works reverse
+  //pinMode(Relay_Pin, OUTPUT);
+  //digitalWrite(Relay_Pin, HIGH);
+  //Serial.println("in Relay pin setup");
+  pinMode(A0, INPUT);
+  pinMode(Light, OUTPUT);
+}
+
+void DoorStat() {
+  
+}
+
+void SenseMotion() {
+  Blynk.virtualWrite(V1, analogRead(A0));
+}
+
+void SenseDistance() {
+  Serial.print("Distance in CM: ");
+  int distance = ultrasonic.distanceRead();
+  Serial.println(distance);
+  Serial.print("Door Status: ");
+  Serial.println(DoorStatus);
+  Blynk.virtualWrite(V3,distance);
+  if (distance < 30 && DoorStatus == 'O') {
+    digitalWrite(Light, HIGH);
+    Serial.println("set Light to HIGH"); 
+  }
+  else {
+    digitalWrite(Light, LOW);
+    Serial.println("set Light to LOW"); 
+  }
+}
+
+BLYNK_WRITE(V4) //Button Widget is writing to pin V1
+{
+  int pinData = param.asInt(); 
+  if (pinData ==1) {
+    DoorStatus = 'C';
+    Serial.println("set Door to Closed"); 
+  }
+  else {
+    DoorStatus = 'O';
+    Serial.println("set Door to Open"); 
+  }
+}
