@@ -1,3 +1,4 @@
+#define BLYNK_PRINT Serial
 /*
  * Ultrasonic Simple
  * Prints the distance read by an ultrasonic sensor in
@@ -36,21 +37,25 @@
 #include <Ultrasonic.h>
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
+#include <SimpleTimer.h>
+
 /*
  * Pass as a parameter the trigger and echo pin, respectively,
  * or only the signal pin (for sensors 3 pins), like:
  * Ultrasonic ultrasonic(13);
  */
 Ultrasonic ultrasonic(4, 5);
+// the timer object
+SimpleTimer timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+char auth[] = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "XXXX";
-char pass[] = "YYYY";
+char ssid[] = "YYYYYYYYYYYY";
+char pass[] = "ZZZZZZZZZZZZ";
 
 //Variable Declarations
 char DoorStatus = 'C';
@@ -58,18 +63,20 @@ int Light = 1;
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(115200);
   SetupWifi();
   InitializePin();
+  //timer.setInterval(1000L, SenseMotion);
+  timer.setInterval(1000L, SenseDistance);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  Serial.println("In Loop");
   Blynk.run();
-  DoorStat();
-  SenseMotion();
-  SenseDistance();
+  timer.run();
+  //DoorStat();
+  //SenseMotion();
+  //SenseDistance();
 }
 
 void SetupWifi(){
@@ -95,20 +102,32 @@ void SenseMotion() {
   Blynk.virtualWrite(V1, analogRead(A0));
 }
 
-void SenseDistance() {
-  Serial.print("Distance in CM: ");
-  int distance = ultrasonic.distanceRead();
-  Serial.println(distance);
-  Serial.print("Door Status: ");
-  Serial.println(DoorStatus);
-  Blynk.virtualWrite(V3,distance);
-  if (distance < 30 && DoorStatus == 'O') {
+void toggleled() {
+  if (DoorStatus == 'C') {
+    DoorStatus = 'O';
     digitalWrite(Light, HIGH);
-    Serial.println("set Light to HIGH"); 
+  }
+  else {
+    DoorStatus = 'C';
+    digitalWrite(Light, LOW);
+  }
+  BLYNK_LOG("In toggle LED");
+}
+
+void SenseDistance() {
+  //Serial.print("Distance in CM: ");
+  int distance = ultrasonic.distanceRead();
+  //Serial.println(distance);
+  //Serial.print("Door Status: ");
+  //Serial.println(DoorStatus);
+  Blynk.virtualWrite(V3,distance);
+  if (distance < 30) {
+    digitalWrite(Light, HIGH);
+    //Serial.println("set Light to HIGH"); 
   }
   else {
     digitalWrite(Light, LOW);
-    Serial.println("set Light to LOW"); 
+    //Serial.println("set Light to LOW"); 
   }
 }
 
@@ -117,10 +136,10 @@ BLYNK_WRITE(V4) //Button Widget is writing to pin V1
   int pinData = param.asInt(); 
   if (pinData ==1) {
     DoorStatus = 'C';
-    Serial.println("set Door to Closed"); 
+    //Serial.println("set Door to Closed"); 
   }
   else {
     DoorStatus = 'O';
-    Serial.println("set Door to Open"); 
+    //Serial.println("set Door to Open"); 
   }
 }
