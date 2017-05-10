@@ -50,12 +50,12 @@ SimpleTimer timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+char auth[] = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "YYYYYYYYYYYY";
-char pass[] = "ZZZZZZZZZZZZ";
+char ssid[] = "YYYYYYYYY";
+char pass[] = "ZZZZZZZZZ";
 
 //Variable Declarations
 char DoorStatus = 'C';
@@ -67,7 +67,7 @@ void setup() {
   SetupWifi();
   InitializePin();
   //timer.setInterval(1000L, SenseMotion);
-  timer.setInterval(1000L, SenseDistance);
+  timer.setInterval(500L, SenseDistance);
 }
 
 void loop() {
@@ -114,6 +114,12 @@ void toggleled() {
   BLYNK_LOG("In toggle LED");
 }
 
+void blinkled(int rate) {    
+    digitalWrite(Light, LOW);
+    delay(rate);
+    digitalWrite(Light, HIGH);
+}
+
 void SenseDistance() {
   //Serial.print("Distance in CM: ");
   int distance = ultrasonic.distanceRead();
@@ -121,13 +127,13 @@ void SenseDistance() {
   //Serial.print("Door Status: ");
   //Serial.println(DoorStatus);
   Blynk.virtualWrite(V3,distance);
-  if (distance < 30) {
-    digitalWrite(Light, HIGH);
-    //Serial.println("set Light to HIGH"); 
+  Blynk.virtualWrite(V2,map(constrain(distance,30,200),30,200,0,2000));
+  //will add doorstatus=open also in below condition
+  if (distance < 200) {
+    blinkled(map(constrain(distance,30,200),30,200,0,2000));
   }
   else {
     digitalWrite(Light, LOW);
-    //Serial.println("set Light to LOW"); 
   }
 }
 
